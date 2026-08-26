@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Auth from './Auth';
 import CreateProject from './CreateProject';
 import TaskBreakdown from './TaskBreakdown';
+import WorkLog from './WorkLog';
 import ProjectOverview from './ProjectOverview';
 import Dashboard from './Dashboard';
 import TeamWorkload from './TeamWorkload';
@@ -9,20 +11,53 @@ import DependencyGraph from './DependencyGraph';
 import Simulation from './Simulation';
 
 export default function App() {
-  // Initial page on application start is 'create-project'
-  const [activeTab, setActiveTab] = useState('create-project');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [activeUser, setActiveUser] = useState(null);
+  const [projectCode, setProjectCode] = useState('PRJ-001');
 
-  // Step definitions for visual workflow navigation progress bar
+  useEffect(() => {
+    // Load stored user & project code
+    const storedUser = localStorage.getItem('equiflow_user');
+    const storedCode = localStorage.getItem('equiflow_project_code');
+    if (storedUser) {
+      try { setActiveUser(JSON.parse(storedUser)); } catch (e) {}
+    }
+    if (storedCode) {
+      setProjectCode(storedCode);
+    }
+  }, []);
+
+  const handleAuthSuccess = (user, code) => {
+    setActiveUser(user);
+    if (code) setProjectCode(code);
+    setShowAuthModal(false);
+  };
+
+  // Step definitions across all 3 technical areas
   const flowSteps = [
-    { id: 'create-project', label: '1. Create Project', num: 1 },
-    { id: 'task-breakdown', label: '2. Tasks & Assign', num: 2 },
-    { id: 'project-overview', label: '3. Overview', num: 3 },
-    { id: 'dashboard', label: '4. Dashboard', num: 4 },
-    { id: 'workload', label: '5. Workload', num: 5 },
-    { id: 'bottleneck', label: '6. Bottlenecks', num: 6 },
-    { id: 'graph', label: '7. Dependencies', num: 7 },
-    { id: 'simulation', label: '8. Simulation', num: 8 }
+    { id: 'create-project', label: '1. Create Project', member: 'Member 1 (Data)', num: 1 },
+    { id: 'task-breakdown', label: '2. Tasks & Assign', member: 'Member 1 (Data)', num: 2 },
+    { id: 'work-log', label: '3. Log Work & Friction', member: 'Member 1 (Data)', num: 3 },
+    { id: 'project-overview', label: '4. Overview & Team', member: 'Member 1 (Data)', num: 4 },
+    { id: 'dashboard', label: '5. AI Dashboard', member: 'Member 3 (UI)', num: 5 },
+    { id: 'workload', label: '6. Workload & Friction', member: 'Member 3 (UI)', num: 6 },
+    { id: 'bottleneck', label: '7. Bottlenecks', member: 'Member 3 (UI)', num: 7 },
+    { id: 'graph', label: '8. Dependencies (DAG)', member: 'Member 3 (UI)', num: 8 },
+    { id: 'simulation', label: '9. AI Simulation', member: 'Member 3 (UI)', num: 9 }
   ];
+
+  const getActiveMemberBadge = () => {
+    if (['create-project', 'task-breakdown', 'work-log', 'project-overview'].includes(activeTab)) {
+      return { tag: 'Member 1', label: 'Work & Contribution Tracking (Data Layer)' };
+    }
+    if (['bottleneck', 'simulation'].includes(activeTab)) {
+      return { tag: 'Member 2 + 3', label: 'AI Intelligence & Solution Simulation' };
+    }
+    return { tag: 'Member 3', label: 'Dashboard & Visualizations' };
+  };
+
+  const activeBadge = getActiveMemberBadge();
 
   return (
     <div className="app-shell">
@@ -38,7 +73,7 @@ export default function App() {
             </div>
             <div className="logo-text">
               <span className="brand-name">EquiFlow</span>
-              <span className="brand-subtitle">Workload & Bottleneck Analytics</span>
+              <span className="brand-subtitle">Team Workload & Bottleneck Platform</span>
             </div>
           </div>
 
@@ -48,68 +83,92 @@ export default function App() {
               className={`nav-link ${activeTab === 'create-project' ? 'active' : ''}`}
               onClick={() => setActiveTab('create-project')}
             >
-              Create Project
+              1. Create
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'task-breakdown' ? 'active' : ''}`}
               onClick={() => setActiveTab('task-breakdown')}
             >
-              Task Breakdown
+              2. Tasks
+            </button>
+
+            <button 
+              className={`nav-link nav-link-special ${activeTab === 'work-log' ? 'active' : ''}`}
+              onClick={() => setActiveTab('work-log')}
+            >
+              3. Log Work
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'project-overview' ? 'active' : ''}`}
               onClick={() => setActiveTab('project-overview')}
             >
-              Project Overview
+              4. Overview
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
               onClick={() => setActiveTab('dashboard')}
             >
-              Dashboard
+              5. Dashboard
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'workload' ? 'active' : ''}`}
               onClick={() => setActiveTab('workload')}
             >
-              Team Workload
+              6. Workload
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'bottleneck' ? 'active' : ''}`}
               onClick={() => setActiveTab('bottleneck')}
             >
-              Bottlenecks
+              7. Bottlenecks
             </button>
 
             <button 
               className={`nav-link ${activeTab === 'graph' ? 'active' : ''}`}
               onClick={() => setActiveTab('graph')}
             >
-              Dependencies
+              8. Dependencies
             </button>
 
             <button 
               className={`nav-link nav-link-special ${activeTab === 'simulation' ? 'active' : ''}`}
               onClick={() => setActiveTab('simulation')}
             >
-              Simulation
+              9. Simulation
             </button>
           </nav>
 
-          {/* User Role Badge */}
+          {/* User Auth & Project Access Badge */}
           <div className="user-role-badge">
-            <span className="role-tag">Member 3</span>
-            <span className="role-label">Frontend & Visuals</span>
+            <button 
+              className="auth-btn-pill"
+              onClick={() => setShowAuthModal(!showAuthModal)}
+              title="Click to Login / Switch Project"
+            >
+              <span className="dot dot-green"></span>
+              {activeUser ? `👤 ${activeUser.name} (${projectCode})` : '🔑 Login / Join Project'}
+            </button>
+            <span className="role-label">{activeBadge.label}</span>
           </div>
         </div>
       </header>
 
-      {/* Workflow Stepper Bar */}
+      {/* Auth Modal Overlay if triggered */}
+      {showAuthModal && (
+        <div className="auth-overlay animate-fade-in">
+          <div className="auth-modal-box">
+            <button className="auth-close-btn" onClick={() => setShowAuthModal(false)}>✕</button>
+            <Auth onAuthSuccess={handleAuthSuccess} currentProjectCode={projectCode} activeUser={activeUser} />
+          </div>
+        </div>
+      )}
+
+      {/* Horizontally Scrollable Workflow Stepper Bar */}
       <div className="workflow-stepper-bar">
         <div className="stepper-container">
           {flowSteps.map((step, idx) => {
@@ -119,6 +178,7 @@ export default function App() {
                 <div 
                   className={`step-item ${isActive ? 'step-active' : ''}`}
                   onClick={() => setActiveTab(step.id)}
+                  title={`${step.label} (${step.member})`}
                 >
                   <div className="step-circle">{step.num}</div>
                   <span className="step-label">{step.label}</span>
@@ -132,54 +192,59 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="main-content-container">
-        {/* Step 1: Create Project */}
+        {/* Step 1: Create Project (Member 1) */}
         {activeTab === 'create-project' && (
           <CreateProject onProjectCreated={() => setActiveTab('task-breakdown')} />
         )}
 
-        {/* Step 2: Task Breakdown & Assignment */}
+        {/* Step 2: Task Breakdown & Assignment (Member 1) */}
         {activeTab === 'task-breakdown' && (
-          <TaskBreakdown onAssignComplete={() => setActiveTab('project-overview')} />
+          <TaskBreakdown onAssignComplete={() => setActiveTab('work-log')} />
         )}
 
-        {/* Step 3: Project Overview */}
+        {/* Step 3: Work & Contribution Tracking (Member 1) */}
+        {activeTab === 'work-log' && (
+          <WorkLog onWorkLogged={() => {}} activeUser={activeUser} />
+        )}
+
+        {/* Step 4: Project Overview (Member 1) */}
         {activeTab === 'project-overview' && (
           <ProjectOverview onNavigate={(tab) => setActiveTab(tab)} />
         )}
 
-        {/* Step 4: Existing Dashboard */}
+        {/* Step 5: Main Dashboard (Member 3) */}
         {activeTab === 'dashboard' && (
           <Dashboard onNavigate={(tab) => setActiveTab(tab)} />
         )}
 
-        {/* Step 5: Existing Team Workload */}
+        {/* Step 6: Team Workload (Member 3) */}
         {activeTab === 'workload' && (
           <TeamWorkload />
         )}
 
-        {/* Step 6: Existing Bottlenecks */}
+        {/* Step 7: Bottlenecks (Member 3 + Member 2) */}
         {activeTab === 'bottleneck' && (
           <Bottleneck onNavigate={(tab) => setActiveTab(tab)} />
         )}
 
-        {/* Step 7: Existing Dependency Graph */}
+        {/* Step 8: Dependency Graph (Member 3 + Member 2) */}
         {activeTab === 'graph' && (
           <DependencyGraph onNavigate={(tab) => setActiveTab(tab)} />
         )}
 
-        {/* Step 8: Existing Simulation */}
+        {/* Step 9: Simulation (Member 3 + Member 2) */}
         {activeTab === 'simulation' && (
-          <Simulation />
+          <Simulation onNavigate={(tab) => setActiveTab(tab)} />
         )}
       </main>
 
       {/* Footer */}
       <footer className="app-footer">
         <div className="footer-container">
-          <p>© {new Date().getFullYear()} EquiFlow — College Project (Member 3 Frontend & Visualizations)</p>
+          <p>© {new Date().getFullYear()} EquiFlow — 3-Member Shared Platform (Project Code: <strong>{projectCode}</strong>)</p>
           <div className="footer-status-pill">
             <span className="dot dot-green"></span>
-            REST API Stubs Ready for Spring Boot Integration
+            Real User Activity Telemetry Active
           </div>
         </div>
       </footer>
